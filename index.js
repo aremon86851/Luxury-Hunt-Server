@@ -19,6 +19,7 @@ async function run() {
         const usedCarCollection = client.db('luxuryHunt').collection('usedCard')
         const categoryCollection = client.db('luxuryHunt').collection('category')
         const allUserCollection = client.db('luxuryHunt').collection('allUser')
+        const allBookingCollection = client.db('luxuryHunt').collection('allBooking')
         app.get('/homecar', async (req, res) => {
             const query = {}
             const homeAllCar = await usedCarCollection.find(query).limit(6).toArray()
@@ -33,7 +34,6 @@ async function run() {
             const id = req.params.id;
             const query = { categoryId: id }
             const carCollection = await usedCarCollection.find(query).toArray()
-            console.log(carCollection)
             res.send(carCollection)
         })
 
@@ -42,6 +42,13 @@ async function run() {
             const body = req.body;
             const userData = await allUserCollection.insertOne(body)
             res.send(userData)
+        })
+
+        // Booked data api
+        app.post('/allBooking', async (req, res) => {
+            const body = req.body
+            const allBokings = await allBookingCollection.insertOne(body)
+            res.send(allBokings)
         })
 
     }
