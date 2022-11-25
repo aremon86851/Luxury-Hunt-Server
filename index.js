@@ -18,6 +18,7 @@ async function run() {
     try {
         const usedCarCollection = client.db('luxuryHunt').collection('usedCard')
         const categoryCollection = client.db('luxuryHunt').collection('category')
+        const allUserCollection = client.db('luxuryHunt').collection('allUser')
         app.get('/homecar', async (req, res) => {
             const query = {}
             const homeAllCar = await usedCarCollection.find(query).limit(6).toArray()
@@ -35,6 +36,14 @@ async function run() {
             console.log(carCollection)
             res.send(carCollection)
         })
+
+        // User api created
+        app.post('/userCollection', async (req, res) => {
+            const body = req.body;
+            const userData = await allUserCollection.insertOne(body)
+            res.send(userData)
+        })
+
     }
     finally {
 
