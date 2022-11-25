@@ -28,6 +28,13 @@ async function run() {
             const allCategory = await categoryCollection.find(query).toArray()
             res.send(allCategory)
         })
+        app.get('/category/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { categoryId: id }
+            const carCollection = await usedCarCollection.find(query).toArray()
+            console.log(carCollection)
+            res.send(carCollection)
+        })
     }
     finally {
 
