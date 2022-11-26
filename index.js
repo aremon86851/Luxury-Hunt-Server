@@ -51,6 +51,27 @@ async function run() {
             res.send(allBokings)
         })
 
+        // Dataload api for role
+        app.get('/role', async (req, res) => {
+            const email = req.query.email
+            const query = {
+                userEmail: email
+            }
+            const userInfo = await allUserCollection.findOne(query)
+            res.send(userInfo)
+        })
+
+        // For Buyer
+        app.get('/myorder', async (req, res) => {
+            const email = req.query.email
+            console.log(email)
+            const query = {
+                email: email
+            }
+            const orders = await allBookingCollection.find(query).toArray()
+            console.log(orders)
+            res.send(orders)
+        })
     }
     finally {
 
