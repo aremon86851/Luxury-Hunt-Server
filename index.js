@@ -78,11 +78,20 @@ async function run() {
             console.log(category)
             res.send(category)
         })
-        // Car product collection 
+        //Add car collection 
         app.post('/usedCar', async (req, res) => {
             const body = req.body
             const addProduct = await usedCarCollection.insertOne(body)
             res.send(addProduct)
+        })
+        // Seller Product
+        app.get('/sellerProduct', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                email: email
+            }
+            const sellerProduct = await usedCarCollection.find(query).toArray()
+            res.send(sellerProduct)
         })
     }
     finally {
