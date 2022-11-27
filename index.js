@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 require("dotenv").config();
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 // Middleware
@@ -20,6 +20,7 @@ async function run() {
         const categoryCollection = client.db('luxuryHunt').collection('category')
         const allUserCollection = client.db('luxuryHunt').collection('allUser')
         const allBookingCollection = client.db('luxuryHunt').collection('allBooking')
+        const addvertiseCollection = client.db('luxuryHunt').collection('advertiseItem')
         app.get('/homecar', async (req, res) => {
             const query = {}
             const homeAllCar = await usedCarCollection.find(query).limit(6).toArray()
@@ -64,18 +65,15 @@ async function run() {
         // For Buyer
         app.get('/myorder', async (req, res) => {
             const email = req.query.email
-            console.log(email)
             const query = {
                 email: email
             }
             const orders = await allBookingCollection.find(query).toArray()
-            console.log(orders)
             res.send(orders)
         })
         app.get('/carCategory', async (req, res) => {
             const query = {};
             const category = await categoryCollection.find(query).project({ categoryName: 1 }).toArray()
-            console.log(category)
             res.send(category)
         })
         //Add car collection 
@@ -100,8 +98,49 @@ async function run() {
                 _id: ObjectId(id)
             }
             const deleteProduct = await usedCarCollection.deleteOne(query)
-            console.log(deleteProduct)
             res.send(deleteProduct)
+        })
+        app.delete('/advartiseItemDelete/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                carId: id
+            }
+            const deleteAdvertise = await addvertiseCollection.deleteOne(query)
+            console.log(id)
+            res.send(deleteAdvertise)
+        })
+
+        // Items load for advertise sections
+        app.get('/advertiseItem', async (req, res) => {
+            const query = {}
+            const advertiseItems = await addvertiseCollection.find(query).toArray()
+            res.send(advertiseItems)
+        })
+        app.post('/advertiseItem/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                _id: ObjectId(id)
+            }
+            const findedItem = await usedCarCollection.findOne(query);
+            const itemStringify = {
+                carId: id,
+                picture: findedItem.picture,
+                name: findedItem.name,
+                condition: findedItem.condition,
+                location: findedItem.location,
+                resalePrice: findedItem.resalePrice,
+                originalPrice: findedItem.originalPrice,
+                yearsOfUse: findedItem.yearsOfUse,
+                postDate: findedItem.postDate,
+                sellerName: findedItem.sellerName,
+                email: findedItem.email,
+                number: findedItem.number,
+                description: findedItem.description,
+                categoryId: findedItem.categoryId
+            }
+            console.log(findedItem)
+            const advertiseItem = await addvertiseCollection.insertOne(itemStringify)
+            res.send(advertiseItem)
         })
     }
     finally {
