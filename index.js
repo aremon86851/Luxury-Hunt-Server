@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
 const port = process.env.PORT || 5000;
 
@@ -12,7 +13,7 @@ app.use(express.json())
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.PASSWORD}@cluster0.hvqv2xi.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri)
+
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 async function run() {
     try {
@@ -21,6 +22,46 @@ async function run() {
         const allUserCollection = client.db('luxuryHunt').collection('allUser')
         const allBookingCollection = client.db('luxuryHunt').collection('allBooking')
         const addvertiseCollection = client.db('luxuryHunt').collection('advertiseItem')
+        const paymentCollection = client.db('luxuryHunt').collection('paymentItem')
+
+
+        app.post('/paymentSuccess', async (req, res) => {
+            const body = req.body;
+            const payment = await paymentCollection.insertOne(body)
+            const id = body.carId;
+            const query = {
+                _id: ObjectId(id)
+            }
+            const docs = {
+                $set: {
+                    payment: 'paid',
+                    transactionId: body.transactionId
+                }
+            }
+            const updatedBooking = await allBookingCollection.updateOne(query, docs)
+            res.send(payment)
+        })
+
+        app.post("/createpaymentintent", async (req, res) => {
+            const body = req.body;
+            const price = body.carPrice
+            const amount = price * 100;
+
+            console.log(amount)
+            // Create a PaymentIntent with the order amount and currency
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: "usd",
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        })
+
         app.get('/homecar', async (req, res) => {
             const query = {}
             const homeAllCar = await usedCarCollection.find(query).limit(6).toArray()
@@ -41,8 +82,13 @@ async function run() {
         // User api created
         app.post('/userCollection', async (req, res) => {
             const body = req.body;
-            const userData = await allUserCollection.insertOne(body)
-            res.send(userData)
+            const query = { userEmail: body.userEmail }
+            const findUser = await allUserCollection.findOne(query)
+            console.log(findUser)
+            if (!findUser) {
+                const userData = await allUserCollection.insertOne(body)
+                res.send(userData)
+            }
         })
 
         // Booked data api
@@ -75,6 +121,16 @@ async function run() {
             const query = {};
             const category = await categoryCollection.find(query).project({ categoryName: 1 }).toArray()
             res.send(category)
+        })
+        // Buyer payment 
+        app.get('/payment/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id)
+            const query = {
+                _id: ObjectId(id)
+            }
+            const paymentInfo = await allBookingCollection.findOne(query);
+            res.send(paymentInfo)
         })
         //Add car collection 
         app.post('/usedCar', async (req, res) => {
@@ -141,6 +197,25 @@ async function run() {
             console.log(findedItem)
             const advertiseItem = await addvertiseCollection.insertOne(itemStringify)
             res.send(advertiseItem)
+        })
+        // For admin
+        app.get('/allSeller', async (req, res) => {
+            const query = { role: "Seller" }
+            const allSeller = await allUserCollection.find(query).toArray()
+            res.send(allSeller)
+        })
+        app.delete('/allSeller/:id', async (req, res) => {
+            const id = req.params.id
+            const query = {
+                _id: ObjectId(id)
+            }
+            const deletedUser = await allUserCollection.deleteOne(query)
+            res.send(deletedUser)
+        })
+        app.get('/allUser', async (req, res) => {
+            const query = {}
+            const allUser = await allUserCollection.find(query).toArray()
+            res.send(allUser)
         })
     }
     finally {
