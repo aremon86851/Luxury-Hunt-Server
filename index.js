@@ -23,6 +23,7 @@ async function run() {
         const allBookingCollection = client.db('luxuryHunt').collection('allBooking')
         const addvertiseCollection = client.db('luxuryHunt').collection('advertiseItem')
         const paymentCollection = client.db('luxuryHunt').collection('paymentItem')
+        const wishlistCollection = client.db('luxuryHunt').collection('wishlist')
 
 
         app.post('/paymentSuccess', async (req, res) => {
@@ -122,6 +123,41 @@ async function run() {
             const category = await categoryCollection.find(query).project({ categoryName: 1 }).toArray()
             res.send(category)
         })
+        app.post('/wishlist/:id', async (req, res) => {
+            const id = req.params.id
+            console.log(id)
+            const query = {
+                _id: ObjectId(id)
+            }
+            const findItem = await usedCarCollection.findOne(query);
+            if (findItem) {
+                const itemStringify = {
+                    carId: id,
+                    picture: findItem.picture,
+                    name: findItem.name,
+                    condition: findItem.condition,
+                    location: findItem.location,
+                    resalePrice: findItem.resalePrice,
+                    originalPrice: findItem.originalPrice,
+                    yearsOfUse: findItem.yearsOfUse,
+                    postDate: findItem.postDate,
+                    sellerName: findItem.sellerName,
+                    email: findItem.email,
+                    number: findItem.number,
+                    description: findItem.description,
+                    categoryId: findItem.categoryId
+                }
+                const wishlistItem = await wishlistCollection.insertOne(itemStringify);
+                res.send(wishlistItem)
+            }
+        })
+        app.get('/wishlistItem', async (req, res) => {
+            const query = {};
+            const allWishlistItem = await wishlistCollection.find(query).toArray()
+            res.send(allWishlistItem)
+        })
+
+
         // Buyer payment 
         app.get('/payment/:id', async (req, res) => {
             const id = req.params.id;
