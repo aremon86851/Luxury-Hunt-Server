@@ -217,6 +217,14 @@ async function run() {
             const allUser = await allUserCollection.find(query).toArray()
             res.send(allUser)
         })
+        app.delete('/allUser/:id', async (req, res) => {
+            const id = req.params.id
+            const query = {
+                _id: ObjectId(id)
+            }
+            const deletedUser = await allUserCollection.deleteOne(query)
+            res.send(deletedUser)
+        })
     }
     finally {
 
